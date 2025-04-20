@@ -31,6 +31,28 @@ def extract_keywords(job_description):
     return result
 
 
+def generate_resume_content(role, keywords, fetched_resumes):
+    fetched_content = "\n".join(fetched_resumes)
+    parser = StrOutputParser()
+    prompt_extract = PromptTemplate.from_template(
+        """
+            ### CONTENT FROM SIMILAR RESUMES:
+            {resumes}
+            ### KEYWORDS
+            {keywords}
+            ### INSTRUCTION:
+            You are a professional in the field of {role}.
+            Create bullet points for a new resume for the role {role} focusing on accomplishments and skills that align with these keywords.
+            You can refer to the content from similar resumes for insights, if necessary.
+        """
+    )
+    chain = prompt_extract | llm | parser
+    result = chain.invoke(
+        {"resumes": fetched_content, "keywords": keywords, "role": role}
+    )
+    return result
+
+
 def update_resume(original_resume, role, keywords, fetched_resumes):
     parser = StrOutputParser()
     fetched_content = "\n".join(fetched_resumes)
