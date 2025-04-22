@@ -3,6 +3,10 @@
 ## Project Overview
 Welcome to the Creativity Olympics with GenAI! This project invites you to explore and showcase innovative applications of generative AI tools in any domain that excites you. Push the boundaries of what's possible with these emerging technologies and demonstrate your creative vision in a collaborative, competitive environment.
 
+Python Version : 
+```
+3.11.7
+```
 Working with your group members, you'll develop a creative application using generative AI tools in whatever way inspires you. The only technical requirement is to incorporate GenAI tools (such as DALL-E, Claude, Suno, Runway, etc.) into your project—how you use them is entirely up to you!
 
 ## Deliverables
