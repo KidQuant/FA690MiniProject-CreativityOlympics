@@ -1,22 +1,20 @@
-import os
-
-import openai
 from dotenv import load_dotenv
-from langchain_core.exceptions import OutputParserException
-from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+import os
 from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.exceptions import OutputParserException
 from langchain_openai import ChatOpenAI
+import openai
 
 load_dotenv()
-openai.api_key = os.environ["OPENAI_API_KEY"]
+openai.api_key = os.environ['OPENAI_API_KEY']
 llm = ChatOpenAI(model="gpt-4o")
-
 
 def extract_keywords(job_description):
     parser = JsonOutputParser()
 
     prompt_extract = PromptTemplate.from_template(
-        """
+            """
             ### SCRAPED TEXT FROM WEBSITE:
             {job_description}
             ### INSTRUCTION:
@@ -25,7 +23,7 @@ def extract_keywords(job_description):
             Only return the valid JSON.
             ### VALID JSON (NO PREAMBLE):
             """
-    )
+        )
     chain = prompt_extract | llm | parser
     result = chain.invoke({"job_description": job_description})
     return result
@@ -35,7 +33,7 @@ def generate_resume_content(role, keywords, fetched_resumes):
     fetched_content = "\n".join(fetched_resumes)
     parser = StrOutputParser()
     prompt_extract = PromptTemplate.from_template(
-        """
+            """
             ### CONTENT FROM SIMILAR RESUMES:
             {resumes}
             ### KEYWORDS
@@ -47,17 +45,14 @@ def generate_resume_content(role, keywords, fetched_resumes):
         """
     )
     chain = prompt_extract | llm | parser
-    result = chain.invoke(
-        {"resumes": fetched_content, "keywords": keywords, "role": role}
-    )
+    result = chain.invoke({'resumes': fetched_content, 'keywords': keywords, 'role': role})
     return result
-
 
 def update_resume(original_resume, role, keywords, fetched_resumes):
     parser = StrOutputParser()
     fetched_content = "\n".join(fetched_resumes)
     prompt_extract = PromptTemplate.from_template(
-        """
+            """
             ### ORIGINAL RESUME
             {original_resume}
             ### CONTENT FROM SIMILAR RESUMES:
@@ -70,12 +65,5 @@ def update_resume(original_resume, role, keywords, fetched_resumes):
         """
     )
     chain = prompt_extract | llm | parser
-    result = chain.invoke(
-        {
-            "original_resume": original_resume,
-            "resumes": fetched_content,
-            "keywords": keywords,
-            "role": role,
-        }
-    )
+    result = chain.invoke({'original_resume': original_resume,'resumes': fetched_content, 'keywords': keywords, 'role': role})
     return result

@@ -10,7 +10,7 @@ def scrape_resume(keywords):
         query = f"resumes for {keywords}"
         response = requests.get(f"https://www.google.com/search?q={query}", timeout=10)
         soup = BeautifulSoup(response.text, "html.parser")
-        return [a["href"] for a in soup.final_all("a", href=True)][:2]
+        return [a["href"] for a in soup.find_all("a", href=True)][:2]
 
     except requests.exceptions.Timeout:
         print("Timed out")
