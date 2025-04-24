@@ -2,7 +2,7 @@ import streamlit as st
 from resume_parser import parse_resume
 import random
 from langchain_utils import extract_keywords, generate_resume_content, update_resume
-from langchain_analyze import summary_prompt
+from langchain_analyze import summary_prompt, strengths_prompt
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.question_answering import load_qa_chain
@@ -14,7 +14,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-openai.api_key = os.environ['OPENAI_API_KEY']
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
 st.title("Resume Analyzer and Optimizer")
 action = st.radio(
@@ -70,12 +70,15 @@ def openai_function(openai_api_key, chunks, analyze):
 # Initialize session state for visibility
 if "show_inputs" not in st.session_state:
     st.session_state.show_inputs = True
+if 'show_strengths_button' not in st.session_state:
+    st.session_state.show_strengths_button = False
 
 # Display file uploader for specific actions
 if action in ["Analyze Resume", "Update Existing Resume"]:
     uploaded_file = st.file_uploader("Upload your resume (PDF)", type=["pdf"])
 else:
     uploaded_file = None
+
 
 # Display input boxes based on the selected action
 if action != "Analyze Resume":
@@ -90,6 +93,9 @@ if st.button("Process"):
         analyze_prompt = summary_prompt(query_with_chunks=pdf_chunks)
         response = openai_function(openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=analyze_prompt)
         st.write(response)
+
+        # Show the "Outline Resume Strengths" button
+        st.session_state.show_strengths_button = True
 
     if (
         action == "Update Existing Resume"
@@ -144,3 +150,22 @@ if st.button("Process"):
 
     else:
         st.error("Please fill all fields to proceed.")
+
+# Conditionally display the "Outline Resume Strengths" button
+if st.session_state.show_strengths_button:
+    if st.button("Outline Resume Strengths"):
+        # Logic to outline resume strengths
+        pdf_chunks = pdf_to_chunks(uploaded_file)
+        prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
+        summary = openai_function(
+            openai_api_key=openai.api_key,
+            chunks=pdf_chunks,
+            analyze=prompt_summary,
+        )
+        prompt_strengths = strengths_prompt(query_with_chunks=summary)
+        strengths = openai_function(
+            openai_api_key=openai.api_key,
+            chunks=pdf_chunks,
+            analyze=prompt_strengths,
+        )
+        st.write(strengths)
