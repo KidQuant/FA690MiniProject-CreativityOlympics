@@ -70,7 +70,7 @@ def openai_function(openai_api_key, chunks, analyze):
 # Initialize session state for visibility
 if "show_inputs" not in st.session_state:
     st.session_state.show_inputs = True
-if 'show_strengths_button' not in st.session_state:
+if "show_strengths_button" not in st.session_state:
     st.session_state.show_strengths_button = False
 
 # Display file uploader for specific actions
@@ -85,87 +85,102 @@ if action != "Analyze Resume":
     job_description = st.text_area("Job Description")
     role = st.text_input("Interested Role")
 
-if st.button("Process"):
-    if action == "Analyze Resume" and uploaded_file is not None:
+# Conditionally buttons for "Analyze Resume"
+if action == "Analyze Resume" and uploaded_file is not None:
+    if st.button("Summarize Resume"):
         toggle_inputs()  # Hide inputs when processing starts
 
         pdf_chunks = pdf_to_chunks(uploaded_file)
+        st.session_state.pdf_chunks = pdf_chunks  # Store chunks in session state
+
         analyze_prompt = summary_prompt(query_with_chunks=pdf_chunks)
-        response = openai_function(openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=analyze_prompt)
+        response = openai_function(
+            openai_api_key=openai.api_key,
+            chunks=pdf_chunks,
+            analyze=analyze_prompt
+        )
         st.write(response)
 
-        # Show the "Outline Resume Strengths" button
-        st.session_state.show_strengths_button = True
-
-    if (
-        action == "Update Existing Resume"
-        and uploaded_file is not None
-        and job_description
-        and role
-    ):
-        resume_text = parse_resume(uploaded_file)
-        keywords = extract_keywords(job_description)
-        urls_keywords = scrape_resume(role)
-
-        fetched_data = [fetch_url_content(url) for url in urls_keywords]
-
-        updated_resume = update_resume(
-            original_resume=resume_text,
-            role=role,
-            keywords=keywords,
-            fetched_resumes=fetched_data,
-        )
-
-        st.download_button(
-            "Download Updated Resume", updated_resume, file_name="updated_resume.txt"
-        )
-
-        st.write("Updated Resume:")
-        st.write(updated_resume)
-
-        st.write("Similar resume urls found:")
-        st.write(urls_keywords)
-
-    elif action == "Create a New Resume" and job_description and role:
-        keywords = extract_keywords(job_description)
-        urls_keywords = scrape_resume(role)
-
-        fetched_data = [fetch_url_content(url) for url in urls_keywords]
-
-        new_resume_content = generate_resume_content(
-            keywords=keywords, role=role, fetched_resumes=fetched_data
-        )
-
-        st.download_button(
-            "Download New Generated Resume",
-            new_resume_content,
-            file_name="new_resume.txt",
-        )
-
-        st.write("Generated Resume:")
-        st.write(new_resume_content)
-
-        st.write("Similar resume urls found:")
-        st.write(urls_keywords)
-
-    else:
-        st.error("Please fill all fields to proceed.")
-
-# Conditionally display the "Outline Resume Strengths" button
-if st.session_state.show_strengths_button:
     if st.button("Outline Resume Strengths"):
-        # Logic to outline resume strengths
-        pdf_chunks = pdf_to_chunks(uploaded_file)
+        # Log to outline resume strengths
+        pdf_chunks = st.session_state.pdf_chunks
         prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
         summary = openai_function(
             openai_api_key=openai.api_key,
             chunks=pdf_chunks,
-            analyze=prompt_summary,
+            analyze=prompt_summary
         )
         prompt_strengths = strengths_prompt(query_with_chunks=summary)
         strengths = openai_function(
             openai_api_key=openai.api_key,
             chunks=pdf_chunks,
-            analyze=prompt_strengths,
+            analyze=prompt_strengths
         )
         st.write(strengths)
+
+if action in ["Create a New Resume", "Update Exisiting Resume"]:
+    if st.button("Process"):
+        # if action == "Analyze Resume" and uploaded_file is not None:
+        #     toggle_inputs()  # Hide inputs when processing starts
+
+        #     pdf_chunks = pdf_to_chunks(uploaded_file)
+        #     analyze_prompt = summary_prompt(query_with_chunks=pdf_chunks)
+        #     response = openai_function(openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=analyze_prompt)
+        #     st.write(response)
+
+        #     # Show the "Outline Resume Strengths" button
+        #     st.session_state.show_strengths_button = True
+
+        if (
+            action == "Update Existing Resume"
+            and uploaded_file is not None
+            and job_description
+            and role
+        ):
+            resume_text = parse_resume(uploaded_file)
+            keywords = extract_keywords(job_description)
+            urls_keywords = scrape_resume(role)
+
+            fetched_data = [fetch_url_content(url) for url in urls_keywords]
+
+            updated_resume = update_resume(
+                original_resume=resume_text,
+                role=role,
+                keywords=keywords,
+                fetched_resumes=fetched_data,
+            )
+
+            st.download_button(
+                "Download Updated Resume", updated_resume, file_name="updated_resume.txt"
+            )
+
+            st.write("Updated Resume:")
+            st.write(updated_resume)
+
+            st.write("Similar resume urls found:")
+            st.write(urls_keywords)
+
+        elif action == "Create a New Resume" and job_description and role:
+            keywords = extract_keywords(job_description)
+            urls_keywords = scrape_resume(role)
+
+            fetched_data = [fetch_url_content(url) for url in urls_keywords]
+
+            new_resume_content = generate_resume_content(
+                keywords=keywords, role=role, fetched_resumes=fetched_data
+            )
+
+            st.download_button(
+                "Download New Generated Resume",
+                new_resume_content,
+                file_name="new_resume.txt",
+            )
+
+            st.write("Generated Resume:")
+            st.write(new_resume_content)
+
+            st.write("Similar resume urls found:")
+            st.write(urls_keywords)
+
+        else:
+            st.error("Please fill all fields to proceed.")
