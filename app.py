@@ -4,11 +4,12 @@ import random
 from langchain_utils import extract_keywords, generate_resume_content, update_resume
 from scrape import scrape_resume, fetch_url_content
 
-st.title("Resume Optimizer")
-action = st.radio("Select Action:", ("Create a New Resume", 
+st.title("Resume Analyzer and Optimizer")
+action = st.radio("Select Action:", ("Analyze Resume", 
+                                     "Create a New Resume", 
                                      "Update Existing Resume"))
 
-if action == "Update Existing Resume":
+if action == "Update Existing Resume" or action == "Analyze Resume":
     uploaded_file = st.file_uploader("Upload your resume (PDF)", type=["pdf"])
 else:
     uploaded_file = False
@@ -17,6 +18,9 @@ job_description = st.text_area("Job Descriotion")
 role = st.text_input("Interested Role")
 
 if st.button("Process"):
+    if action == "Analyze Resume" and uploaded_file is not None:
+        pass
+
     if action == "Update Existing Resume" and uploaded_file is not None and job_description and role:
         resume_text = parse_resume(uploaded_file)
         keywords = extract_keywords(job_description)
