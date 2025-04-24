@@ -42,6 +42,7 @@ def generate_resume_content(role, keywords, fetched_resumes):
             You are a professional in the field of {role}.
             Create bullet points for a new resume for the role {role} focusing on accomplishments and skills that align with these keywords.
             You can refer to the content from similar resumes for insights, if necessary.
+            In addition, provide an example of where you would put these bullet points in the resume.
         """
     )
     chain = prompt_extract | llm | parser

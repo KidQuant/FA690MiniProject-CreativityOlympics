@@ -5,13 +5,15 @@ from langchain.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 import os
 import openai
 from dotenv import load_dotenv
 
 load_dotenv()
-openai.api_key = os.environ['OPENAI_API_KEY']
+openai.api_key = os.environ["OPENAI_API_KEY"]
+
 
 def pdf_to_chunks(pdf):
     # read pdf and it returns memory addresss
@@ -24,11 +26,11 @@ def pdf_to_chunks(pdf):
 
     # Split the long text into small chunks
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=700,
-        chunk_overlap=200,
-        length_function=len)
+        chunk_size=700, chunk_overlap=200, length_function=len
+    )
 
     chunks = text_splitter.split_text(text=text)
+
 
 def openai_function(openai_api_key, chunks, analyze):
 
@@ -48,3 +50,15 @@ def openai_function(openai_api_key, chunks, analyze):
     chain = load_qa_chain(llm=llm, chain_type="stuff")
 
     response = chain.run(input_documents=docs, question=analyze)
+    return response
+
+
+def summary_prompt(query_with_chunks):
+    query = f'''
+    I need a detailed summary of the resume below. Finally, provide us with a conclusion
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    {query_with_chunks}
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    '''
+    return query

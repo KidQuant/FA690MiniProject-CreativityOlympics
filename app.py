@@ -9,17 +9,29 @@ action = st.radio("Select Action:", ("Analyze Resume",
                                      "Create a New Resume", 
                                      "Update Existing Resume"))
 
-if action == "Update Existing Resume" or action == "Analyze Resume":
+# Initialize session state for visibility
+if 'show_inputs' not in st.session_state:
+    st.session_state.show_inputs = True
+
+# Function to toggle input visibility
+def toggle_inputs():
+    st.session_state.show_inputs = not st.session_state.show_inputs
+
+# Display file uploader for specific actions
+if action in ["Analyze Resume", "Update Existing Resume"]:
     uploaded_file = st.file_uploader("Upload your resume (PDF)", type=["pdf"])
 else:
-    uploaded_file = False
+    uploaded_file = None
 
-job_description = st.text_area("Job Descriotion")
-role = st.text_input("Interested Role")
+# Display input boxes based on the selected action
+if action != "Analyze Resume":
+    job_description = st.text_area("Job Description")
+    role = st.text_input("Interested Role")
 
 if st.button("Process"):
     if action == "Analyze Resume" and uploaded_file is not None:
-        pass
+        toggle_inputs()  # Hide inputs when processing starts
+        # Add your resume analysis logic here
 
     if action == "Update Existing Resume" and uploaded_file is not None and job_description and role:
         resume_text = parse_resume(uploaded_file)
