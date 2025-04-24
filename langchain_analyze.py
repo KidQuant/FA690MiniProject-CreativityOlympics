@@ -20,7 +20,16 @@ def summary_prompt(query_with_chunks):
 
 
 def strengths_prompt(query_with_chunks):
-    query = f''' I need a detailed analysis and explaination of the strengths with the strengths of the resume presented. List out the strengths.
+    query = f''' I need a detailed analysis and explaination of the strengths of the resume. List out the strengths.
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    {query_with_chunks}
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    '''
+    return query
+
+
+def weaknesses_prompt(query_with_chunks):
+    query = f''' I need a detailed analysis and explaination of the weaknesses of the resume. List out the weaknesses.
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     {query_with_chunks}
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

@@ -2,7 +2,7 @@ import streamlit as st
 from resume_parser import parse_resume
 import random
 from langchain_utils import extract_keywords, generate_resume_content, update_resume
-from langchain_analyze import summary_prompt, strengths_prompt
+from langchain_analyze import summary_prompt, strengths_prompt, weaknesses_prompt
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.question_answering import load_qa_chain
@@ -71,7 +71,7 @@ def openai_function(openai_api_key, chunks, analyze):
 if "show_inputs" not in st.session_state:
     st.session_state.show_inputs = True
 if "show_strengths_button" not in st.session_state:
-    st.session_state.show_strengths_button = False
+    st.session_state.show_strengths_button = None
 
 # Display file uploader for specific actions
 if action in ["Analyze Resume", "Update Existing Resume"]:
@@ -87,7 +87,20 @@ if action != "Analyze Resume":
 
 # Conditionally buttons for "Analyze Resume"
 if action == "Analyze Resume" and uploaded_file is not None:
-    if st.button("Summarize Resume"):
+    # Create columns for horizontal button layout
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        summarize_button = st.button("Summarize Resume")
+
+    with col2:
+        strengths_button = st.button("Outline Resume Strengths")
+
+    with col3:
+        weaknesses_button = st.button("Outline Resume Weaknesses")
+
+
+    if summarize_button:
         toggle_inputs()  # Hide inputs when processing starts
 
         pdf_chunks = pdf_to_chunks(uploaded_file)
@@ -95,14 +108,25 @@ if action == "Analyze Resume" and uploaded_file is not None:
 
         analyze_prompt = summary_prompt(query_with_chunks=pdf_chunks)
         response = openai_function(
-            openai_api_key=openai.api_key,
-            chunks=pdf_chunks,
-            analyze=analyze_prompt
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=analyze_prompt
         )
         st.write(response)
 
-    if st.button("Outline Resume Strengths"):
+    if strengths_button:
         # Log to outline resume strengths
+        pdf_chunks = st.session_state.pdf_chunks
+        prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
+        summary = openai_function(
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_summary
+        )
+        prompt_strengths = strengths_prompt(query_with_chunks=summary)
+        strengths = openai_function(
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_strengths
+        )
+        st.write(strengths)
+
+    if weaknesses_button:
+        # Logic to outline resume weaknesses
         pdf_chunks = st.session_state.pdf_chunks
         prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
         summary = openai_function(
@@ -110,26 +134,16 @@ if action == "Analyze Resume" and uploaded_file is not None:
             chunks=pdf_chunks,
             analyze=prompt_summary
         )
-        prompt_strengths = strengths_prompt(query_with_chunks=summary)
-        strengths = openai_function(
+        prompt_weaknesses = weaknesses_prompt(query_with_chunks=summary)
+        weaknesses = openai_function(
             openai_api_key=openai.api_key,
             chunks=pdf_chunks,
-            analyze=prompt_strengths
+            analyze=prompt_weaknesses
         )
-        st.write(strengths)
+        st.write(weaknesses)
 
 if action in ["Create a New Resume", "Update Exisiting Resume"]:
     if st.button("Process"):
-        # if action == "Analyze Resume" and uploaded_file is not None:
-        #     toggle_inputs()  # Hide inputs when processing starts
-
-        #     pdf_chunks = pdf_to_chunks(uploaded_file)
-        #     analyze_prompt = summary_prompt(query_with_chunks=pdf_chunks)
-        #     response = openai_function(openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=analyze_prompt)
-        #     st.write(response)
-
-        #     # Show the "Outline Resume Strengths" button
-        #     st.session_state.show_strengths_button = True
 
         if (
             action == "Update Existing Resume"
@@ -151,7 +165,9 @@ if action in ["Create a New Resume", "Update Exisiting Resume"]:
             )
 
             st.download_button(
-                "Download Updated Resume", updated_resume, file_name="updated_resume.txt"
+                "Download Updated Resume",
+                updated_resume,
+                file_name="updated_resume.txt",
             )
 
             st.write("Updated Resume:")
