@@ -2,7 +2,12 @@ import streamlit as st
 from resume_parser import parse_resume
 import random
 from langchain_utils import extract_keywords, generate_resume_content, update_resume
-from langchain_analyze import summary_prompt, strengths_prompt, weaknesses_prompt
+from langchain_analyze import (
+    summary_prompt,
+    strengths_prompt,
+    weaknesses_prompt,
+    job_title_prompt,
+)
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.question_answering import load_qa_chain
@@ -88,7 +93,7 @@ if action != "Analyze Resume":
 # Conditionally buttons for "Analyze Resume"
 if action == "Analyze Resume" and uploaded_file is not None:
     # Create columns for horizontal button layout
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         summarize_button = st.button("Summarize Resume")
@@ -99,6 +104,8 @@ if action == "Analyze Resume" and uploaded_file is not None:
     with col3:
         weaknesses_button = st.button("Outline Resume Weaknesses")
 
+    with col4:
+        jobs = st.button("Provide Job Examples")
 
     if summarize_button:
         toggle_inputs()  # Hide inputs when processing starts
@@ -113,6 +120,7 @@ if action == "Analyze Resume" and uploaded_file is not None:
         st.write(response)
 
     if strengths_button:
+        toggle_inputs()
         # Log to outline resume strengths
         pdf_chunks = st.session_state.pdf_chunks
         prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
@@ -126,21 +134,34 @@ if action == "Analyze Resume" and uploaded_file is not None:
         st.write(strengths)
 
     if weaknesses_button:
+        toggle_inputs()
+        pdf_chunks = pdf_to_chunks(uploaded_file)
+        st.session_state.pdf_chunks = pdf_chunks
         # Logic to outline resume weaknesses
-        pdf_chunks = st.session_state.pdf_chunks
         prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
         summary = openai_function(
-            openai_api_key=openai.api_key,
-            chunks=pdf_chunks,
-            analyze=prompt_summary
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_summary
         )
         prompt_weaknesses = weaknesses_prompt(query_with_chunks=summary)
         weaknesses = openai_function(
-            openai_api_key=openai.api_key,
-            chunks=pdf_chunks,
-            analyze=prompt_weaknesses
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_weaknesses
         )
         st.write(weaknesses)
+
+    if jobs:
+
+        toggle_inputs()
+        pdf_chunks = pdf_to_chunks(uploaded_file)
+        st.session_state.pdf_chunks = pdf_chunks
+        prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
+        summary = openai_function(
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_summary
+        )
+        job_prompt = job_title_prompt(query_with_chunks=summary)
+        jobs = openai_function(
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=job_prompt
+        )
+        st.write(jobs)
 
 if action in ["Create a New Resume", "Update Exisiting Resume"]:
     if st.button("Process"):

@@ -35,3 +35,16 @@ def weaknesses_prompt(query_with_chunks):
     """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
     '''
     return query
+
+def job_title_prompt(query_with_chunks):
+    query = f'''Based on my resume, come up with some job roles that would best fit my skills and abilities.
+                """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+                {query_with_chunks}
+
+                """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+                '''
+    return query
+
+            
+
+
