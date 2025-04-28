@@ -1,9 +1,10 @@
 import json
+import re
 import streamlit as st
 from resume_parser import parse_resume
 import random
 from langchain_utils import extract_keywords, generate_resume_content, update_resume
-from langchain_analyze import (
+from langchain_prompts import (
     summary_prompt,
     strengths_prompt,
     weaknesses_prompt,
@@ -171,7 +172,7 @@ if action == "Analyze Resume" and uploaded_file is not None:
             openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=job_prompt
         )
         # Store job examples as a list in session state
-        job_examples_list = [job.strip() for job in jobs.split("\n") if job.strip()]
+        job_examples_list = re.findall(r"\*\*(.*?)\*\*", jobs)
         st.session_state.job_examples = job_examples_list
         # st.write(jobs)
 
