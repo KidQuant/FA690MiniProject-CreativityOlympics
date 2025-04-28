@@ -1,3 +1,4 @@
+import json
 import streamlit as st
 from resume_parser import parse_resume
 import random
@@ -17,6 +18,14 @@ from scrape import scrape_resume, fetch_url_content
 from PyPDF2 import PdfReader
 import os
 from dotenv import load_dotenv
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import time
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from jobspy import scrape_jobs
 
 load_dotenv()
 openai.api_key = os.environ["OPENAI_API_KEY"]
@@ -71,12 +80,13 @@ def openai_function(openai_api_key, chunks, analyze):
     response = chain.run(input_documents=docs, question=analyze)
     return response
 
-
 # Initialize session state for visibility
 if "show_inputs" not in st.session_state:
     st.session_state.show_inputs = True
 if "show_strengths_button" not in st.session_state:
     st.session_state.show_strengths_button = None
+if "show_look_for_jobs_button" not in st.session_state:
+    st.session_state.show_look_for_jobs_button = False
 
 # Display file uploader for specific actions
 if action in ["Analyze Resume", "Update Existing Resume"]:
@@ -105,7 +115,7 @@ if action == "Analyze Resume" and uploaded_file is not None:
         weaknesses_button = st.button("Outline Resume Weaknesses")
 
     with col4:
-        jobs = st.button("Provide Job Examples")
+        jobs_button = st.button("Provide Job Examples")
 
     if summarize_button:
         toggle_inputs()  # Hide inputs when processing starts
@@ -148,8 +158,7 @@ if action == "Analyze Resume" and uploaded_file is not None:
         )
         st.write(weaknesses)
 
-    if jobs:
-
+    if jobs_button:
         toggle_inputs()
         pdf_chunks = pdf_to_chunks(uploaded_file)
         st.session_state.pdf_chunks = pdf_chunks
@@ -161,7 +170,14 @@ if action == "Analyze Resume" and uploaded_file is not None:
         jobs = openai_function(
             openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=job_prompt
         )
-        st.write(jobs)
+        # Store job examples as a list in session state
+        job_examples_list = [job.strip() for job in jobs.split("\n") if job.strip()]
+        st.session_state.job_examples = job_examples_list
+        # st.write(jobs)
+
+        st.session_state.show_look_for_jobs_button = True
+        st.write(job_examples_list)
+
 
 if action in ["Create a New Resume", "Update Exisiting Resume"]:
     if st.button("Process"):
@@ -196,28 +212,3 @@ if action in ["Create a New Resume", "Update Exisiting Resume"]:
 
             st.write("Similar resume urls found:")
             st.write(urls_keywords)
-
-        elif action == "Create a New Resume" and job_description and role:
-            keywords = extract_keywords(job_description)
-            urls_keywords = scrape_resume(role)
-
-            fetched_data = [fetch_url_content(url) for url in urls_keywords]
-
-            new_resume_content = generate_resume_content(
-                keywords=keywords, role=role, fetched_resumes=fetched_data
-            )
-
-            st.download_button(
-                "Download New Generated Resume",
-                new_resume_content,
-                file_name="new_resume.txt",
-            )
-
-            st.write("Generated Resume:")
-            st.write(new_resume_content)
-
-            st.write("Similar resume urls found:")
-            st.write(urls_keywords)
-
-        else:
-            st.error("Please fill all fields to proceed.")
