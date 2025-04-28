@@ -1,3 +1,4 @@
+import pandas as pd
 import json
 import re
 import streamlit as st
@@ -19,14 +20,9 @@ from scrape import scrape_resume, fetch_url_content
 from PyPDF2 import PdfReader
 import os
 from dotenv import load_dotenv
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-import time
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from jobspy import scrape_jobs
+
+
 
 load_dotenv()
 openai.api_key = os.environ["OPENAI_API_KEY"]
@@ -80,6 +76,7 @@ def openai_function(openai_api_key, chunks, analyze):
 
     response = chain.run(input_documents=docs, question=analyze)
     return response
+
 
 # Initialize session state for visibility
 if "show_inputs" not in st.session_state:
@@ -159,26 +156,74 @@ if action == "Analyze Resume" and uploaded_file is not None:
         )
         st.write(weaknesses)
 
-    if jobs_button:
-        toggle_inputs()
-        pdf_chunks = pdf_to_chunks(uploaded_file)
-        st.session_state.pdf_chunks = pdf_chunks
-        prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
-        summary = openai_function(
-            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_summary
-        )
-        job_prompt = job_title_prompt(query_with_chunks=summary)
-        jobs = openai_function(
-            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=job_prompt
-        )
-        # Store job examples as a list in session state
-        job_examples_list = re.findall(r"\*\*(.*?)\*\*", jobs)
-        st.session_state.job_examples = job_examples_list
-        # st.write(jobs)
+if jobs_button:
+    toggle_inputs()
+    pdf_chunks = pdf_to_chunks(uploaded_file)
+    st.session_state.pdf_chunks = pdf_chunks
+    prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
+    summary = openai_function(
+        openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_summary
+    )
+    job_prompt = job_title_prompt(query_with_chunks=summary)
+    jobs = openai_function(
+        openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=job_prompt
+    )
+    # Store job examples as a list in session state
+    job_examples_list = re.findall(r"\*\*(.*?)\*\*", jobs)
+    st.session_state.job_examples = job_examples_list
+    st.write(jobs)
 
-        st.session_state.show_look_for_jobs_button = True
-        st.write(job_examples_list)
+    # Set the flag to show the "Search for Jobs" button
+    st.session_state.show_scrape_jobs_button = True
 
+# Check the flag and display the button
+if st.session_state.get("show_scrape_jobs_button", False):
+    if st.button("Search for Jobs"):
+        st.write(
+            "Web Scraping for the most relevant jobs:", st.session_state.job_examples
+        )
+
+        jobs_scraped = pd.DataFrame()  # Initialize an empty DataFrame
+
+        for job in st.session_state.job_examples:
+            # Scrape jobs for each job title in jobs_list
+            jobs_scraped_for_job = scrape_jobs(
+                site_name=[
+                    "indeed",
+                    "linkedin",
+                    "glassdoor",
+                    "google",
+                ],
+                search_term=job,
+                location="New York, NY",
+                max_results=20,
+                country_indeed="USA",
+            )
+
+            jobs_scraped_for_job["job_type"] = job
+
+            # Merge the output with the previous dataframe
+            jobs_scraped = pd.concat(
+                [jobs_scraped, jobs_scraped_for_job], ignore_index=True
+            )
+
+        jobs_scraped = jobs_scraped[
+            [
+                # "id",
+                "site",
+                "job_url",
+                "title",
+                "company",
+                "date_posted",
+                "job_type",
+                "interval",
+                "min_amount",
+                "max_amount",
+                "currency",
+                "description",
+            ]
+        ]
+        st.write(jobs_scraped)
 
 if action in ["Create a New Resume", "Update Exisiting Resume"]:
     if st.button("Process"):
