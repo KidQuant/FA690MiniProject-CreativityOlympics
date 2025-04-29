@@ -156,25 +156,25 @@ if action == "Analyze Resume" and uploaded_file is not None:
         )
         st.write(weaknesses)
 
-if jobs_button:
-    toggle_inputs()
-    pdf_chunks = pdf_to_chunks(uploaded_file)
-    st.session_state.pdf_chunks = pdf_chunks
-    prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
-    summary = openai_function(
-        openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_summary
-    )
-    job_prompt = job_title_prompt(query_with_chunks=summary)
-    jobs = openai_function(
-        openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=job_prompt
-    )
-    # Store job examples as a list in session state
-    job_examples_list = re.findall(r"\*\*(.*?)\*\*", jobs)
-    st.session_state.job_examples = job_examples_list
-    st.write(jobs)
+    if jobs_button:
+        toggle_inputs()
+        pdf_chunks = pdf_to_chunks(uploaded_file)
+        st.session_state.pdf_chunks = pdf_chunks
+        prompt_summary = summary_prompt(query_with_chunks=pdf_chunks)
+        summary = openai_function(
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=prompt_summary
+        )
+        job_prompt = job_title_prompt(query_with_chunks=summary)
+        jobs = openai_function(
+            openai_api_key=openai.api_key, chunks=pdf_chunks, analyze=job_prompt
+        )
+        # Store job examples as a list in session state
+        job_examples_list = re.findall(r"\*\*(.*?)\*\*", jobs)
+        st.session_state.job_examples = job_examples_list
+        st.write(jobs)
 
-    # Set the flag to show the "Search for Jobs" button
-    st.session_state.show_scrape_jobs_button = True
+        # Set the flag to show the "Search for Jobs" button
+        st.session_state.show_scrape_jobs_button = True
 
 # Check the flag and display the button
 if st.session_state.get("show_scrape_jobs_button", False):
