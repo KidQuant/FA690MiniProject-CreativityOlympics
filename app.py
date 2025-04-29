@@ -23,7 +23,6 @@ from dotenv import load_dotenv
 from jobspy import scrape_jobs
 
 
-
 load_dotenv()
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
@@ -252,9 +251,35 @@ if action in ["Create a New Resume", "Update Exisiting Resume"]:
                 updated_resume,
                 file_name="updated_resume.txt",
             )
-
+            st.write("Creating a new resume...")
             st.write("Updated Resume:")
             st.write(updated_resume)
 
             st.write("Similar resume urls found:")
             st.write(urls_keywords)
+
+        elif action == "Create a New Resume" and job_description and role:
+            keywords = extract_keywords(job_description)
+            urls_keywords = scrape_resume(role)
+
+            fetched_data = [fetch_url_content(url) for url in urls_keywords]
+
+            new_resume_content = generate_resume_content(
+                keywords=keywords, role=role, fetched_resumes=fetched_data
+            )
+
+            st.download_button(
+                "Download New Generated Resume",
+                new_resume_content,
+                file_name="new_resume.txt",
+            )
+
+            st.write("Generated Resume:")
+
+            st.write(new_resume_content)
+
+            st.write("Similar resume urls found: ")
+            st.write(urls_keywords)
+
+        else:
+            st.error("Please fill all fields to proceed.")
