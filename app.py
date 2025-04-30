@@ -10,7 +10,6 @@ from langchain_prompts import (
     strengths_prompt,
     weaknesses_prompt,
     job_title_prompt,
-    analyze_skills_from_jobs,
 )
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -78,27 +77,6 @@ def openai_function(openai_api_key, chunks, analyze):
     return response
 
 
-def openai_function_mini(openai_api_key, chunks, analyze):
-
-    # Using OpenAI service for embedding
-    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
-
-    # Facebook AI Similarity Search library help us to convert text data to numerical vector
-    vectorstores = FAISS.from_texts(chunks, embedding=embeddings)
-
-    # compares the query and chunks, enabling the selection of the top 'K' most similiar chunks based on their similarity scores.
-    docs = vectorstores.similarity_search(query=analyze, k=3)
-
-    # creates an OpenAI object, using the ChatGPT 4
-    llm = ChatOpenAI(model="gpt-4.1-mini", api_key=openai_api_key)
-
-    # question-answering (QA) pipeline, making use of the load_qa_chain function
-    chain = load_qa_chain(llm=llm, chain_type="stuff")
-
-    response = chain.run(input_documents=docs, question=analyze)
-    return response
-
-
 # Initialize session state for visibility
 if "show_inputs" not in st.session_state:
     st.session_state.show_inputs = True
@@ -116,7 +94,7 @@ else:
 
 # Display input boxes based on the selected action
 if action != "Analyze Resume":
-    # job_description = st.text_area("Job Description")
+    job_description = st.text_area("Job Description")
     role = st.text_input("Interested Role")
 
 # Conditionally buttons for "Analyze Resume"
@@ -252,41 +230,20 @@ if action in ["Create a New Resume", "Update Existing Resume"]:
         if (
             action == "Update Existing Resume"
             and uploaded_file is not None
+            and job_description
             and role
         ):
             resume_text = parse_resume(uploaded_file)
-            # keywords = extract_keywords(job_description)
-            # urls_keywords = scrape_resume(role)
-
-            # fetched_data = [fetch_url_content(url) for url in urls_keywords]
-
-            interested_roles = scrape_jobs(
-                site_name=[
-                    "indeed",
-                    "linkedin",
-                    "glassdoor",
-                    "google",
-                ],
-                search_term=role,
-                location="New York, NY",
-                max_results=5,
-                country_indeed="USA",
-            )
-
-            skills = interested_roles[["title", "description", "job_type"]]
-            skills_json = skills.to_json(orient="records")
-            skills_query = analyze_skills_from_jobs(skills_json)
-            skills_response = openai_function_mini(
-                openai_api_key=openai.api_key, chunks=skills_json, analyze=skills_query
-            )
-
-
+            keywords = extract_keywords(job_description)
+            urls_keywords = scrape_resume(role)
+            fetched_data = [fetch_url_content(url) for url in urls_keywords]
 
             # Generate 2 updated resumes
             updated_resume_1 = update_resume(
                 original_resume=resume_text,
                 role=role,
-                descriptions=skills_response,
+                keywords=keywords,
+                fetched_resumes=fetched_data,
             )
 
             updated_resume_2 = update_resume(
@@ -314,7 +271,8 @@ if action in ["Create a New Resume", "Update Existing Resume"]:
             st.write("Similar resume urls found:")
             st.write(urls_keywords)
 
-        if action == "Create a New Resume" and role:
+        elif action == "Create a New Resume" and job_description and role:
+            keywords = extract_keywords(job_description)
             urls_keywords = scrape_resume(role)
             fetched_data = [fetch_url_content(url) for url in urls_keywords]
 

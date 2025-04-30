@@ -49,19 +49,22 @@ def generate_resume_content(role, keywords, fetched_resumes):
     result = chain.invoke({'resumes': fetched_content, 'keywords': keywords, 'role': role})
     return result
 
-def update_resume(original_resume, role, descriptions):
+def update_resume(original_resume, role, keywords, fetched_resumes):
     parser = StrOutputParser()
+    fetched_content = "\n".join(fetched_resumes)
     prompt_extract = PromptTemplate.from_template(
             """
             ### ORIGINAL RESUME
             {original_resume}
-            ### DESCRIPTIONS OF JOBS THAT I'M INTERESTED IN APPLYING TO:
-            {descriptions}
+            ### CONTENT FROM SIMILAR RESUMES:
+            {resumes}
+            ### KEYWORDS
+            {keywords}
             ### INSTRUCTION:
             You are a professional in the field of {role}.
-            Update the original resume for the role {role} by integrating the descriptions and insights the descriptions provided, ensuring it remains coherent and professional.
+            Update the original resume for the role {role} by integrating the keywords and insights from these similar resumes, ensuring it remains coherent and professional.
         """
     )
     chain = prompt_extract | llm | parser
-    result = chain.invoke({'original_resume': original_resume, 'descriptions': descriptions, 'role': role})
+    result = chain.invoke({'original_resume': original_resume,'resumes': fetched_content, 'keywords': keywords, 'role': role})
     return result
