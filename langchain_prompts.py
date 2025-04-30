@@ -44,7 +44,12 @@ def job_title_prompt(query_with_chunks):
                 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
                 '''
     return query
-
             
+def analyze_skills_from_jobs(jobs_json):
+    query = f'''Analyze the following job data to extract the most important skills for candidates:
+                \"\"\"{jobs_json}\"\"\"
+             '''
+    return query
+
 
 
