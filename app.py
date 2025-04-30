@@ -224,7 +224,7 @@ if st.session_state.get("show_scrape_jobs_button", False):
         ]
         st.write(jobs_scraped)
 
-if action in ["Create a New Resume", "Update Exisiting Resume"]:
+if action in ["Create a New Resume", "Update Existing Resume"]:
     if st.button("Process"):
 
         if (
@@ -236,49 +236,75 @@ if action in ["Create a New Resume", "Update Exisiting Resume"]:
             resume_text = parse_resume(uploaded_file)
             keywords = extract_keywords(job_description)
             urls_keywords = scrape_resume(role)
-
             fetched_data = [fetch_url_content(url) for url in urls_keywords]
 
-            updated_resume = update_resume(
+            # Generate 2 updated resumes
+            updated_resume_1 = update_resume(
                 original_resume=resume_text,
                 role=role,
                 keywords=keywords,
                 fetched_resumes=fetched_data,
             )
 
-            st.download_button(
-                "Download Updated Resume",
-                updated_resume,
-                file_name="updated_resume.txt",
+            updated_resume_2 = update_resume(
+                original_resume=resume_text,
+                role=role,
+                keywords=keywords["skills"] + ["variation"],  # FIXED
+                fetched_resumes=fetched_data
             )
-            st.write("Creating a new resume...")
-            st.write("Updated Resume:")
-            st.write(updated_resume)
 
+            st.subheader("Compare the two updated resume versions")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("### ✍️ Updated Resume 1")
+                st.text_area("Resume 1", updated_resume_1, height=400, key="ur1")
+
+            with col2:
+                st.markdown("### ✍️ Updated Resume 2")
+                st.text_area("Resume 2", updated_resume_2, height=400, key="ur2")
+
+            selection = st.radio("✅ Select the version you'd like to download:", ["Updated Resume 1", "Updated Resume 2"])
+            selected_resume = updated_resume_1 if selection == "Updated Resume 1" else updated_resume_2
+
+            st.download_button("📄 Download Selected Updated Resume", selected_resume, file_name="updated_resume.txt")
             st.write("Similar resume urls found:")
             st.write(urls_keywords)
 
         elif action == "Create a New Resume" and job_description and role:
             keywords = extract_keywords(job_description)
             urls_keywords = scrape_resume(role)
-
             fetched_data = [fetch_url_content(url) for url in urls_keywords]
 
-            new_resume_content = generate_resume_content(
-                keywords=keywords, role=role, fetched_resumes=fetched_data
+            # Generate 2 new resumes
+            resume_option_1 = generate_resume_content(
+                role=role,
+                keywords=keywords,
+                fetched_resumes=fetched_data
             )
 
-            st.download_button(
-                "Download New Generated Resume",
-                new_resume_content,
-                file_name="new_resume.txt",
-            )
+            resume_option_2 = generate_resume_content(
+                role=role,
+                keywords=keywords["skills"] + ["variation"],  # FIXED
+                fetched_resumes=fetched_data
+)
 
-            st.write("Generated Resume:")
+            st.subheader("Compare the two generated resume versions")
 
-            st.write(new_resume_content)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("### ✍️ Resume Option 1")
+                st.text_area("Resume 1", resume_option_1, height=400, key="cr1")
 
-            st.write("Similar resume urls found: ")
+            with col2:
+                st.markdown("### ✍️ Resume Option 2")
+                st.text_area("Resume 2", resume_option_2, height=400, key="cr2")
+
+            selection = st.radio("✅ Select the version you'd like to download:", ["Resume Option 1", "Resume Option 2"])
+            selected_resume = resume_option_1 if selection == "Resume Option 1" else resume_option_2
+
+            st.download_button("📄 Download Selected Resume", selected_resume, file_name="new_resume.txt")
+            st.write("Similar resume urls found:")
             st.write(urls_keywords)
 
         else:
