@@ -272,22 +272,25 @@ if action in ["Create a New Resume", "Update Existing Resume"]:
             st.write(urls_keywords)
 
         elif action == "Create a New Resume" and job_description and role:
-            keywords = extract_keywords(job_description)
-            urls_keywords = scrape_resume(role)
-            fetched_data = [fetch_url_content(url) for url in urls_keywords]
+            with st.spinner("✍️ Generating your resumes... hang tight!"): 
+                keywords = extract_keywords(job_description)
+                urls_keywords = scrape_resume(role)
+                fetched_data = [fetch_url_content(url) for url in urls_keywords]
 
-            # Generate 2 new resumes
-            resume_option_1 = generate_resume_content(
-                role=role,
-                keywords=keywords,
-                fetched_resumes=fetched_data
-            )
-
-            resume_option_2 = generate_resume_content(
+                # Generate 2 new resumes
+                resume_option_1 = generate_resume_content(
+                    role=role,
+                    keywords=keywords,
+                    fetched_resumes=fetched_data
+                )
+                resume_option_2 = generate_resume_content(
                 role=role,
                 keywords=keywords["skills"] + ["variation"],  # FIXED
                 fetched_resumes=fetched_data
-)
+            )
+
+            st.toast("✅ Resume generation complete!", icon="📄")
+
 
             st.subheader("Compare the two generated resume versions")
 
