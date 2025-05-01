@@ -4,6 +4,8 @@
 
 The ROAR! App is a comprehensive tool designed to assist users in optimizing and analyzing resumes. It leverages advanced AI models to provide insights into resume strengths and weaknesses, generate new resumes, and suggest job roles based on the user's skills and experiences. The application also includes a web scraping feature to find relevant job listings.
 
+ROAR! is an acynoymn for **R**esume **O**ptimizer & **A**nalyzer for avoiding the **R**at-Race.
+
 ## Features
 
 1. **Resume Analysis**:
