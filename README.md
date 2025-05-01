@@ -48,6 +48,7 @@ ROAR! is an acynoymn for **R**esume **O**ptimizer & **A**nalyzer for avoiding th
 
 1. **Installation**:
    - Clone the repository.
+   - The code should run with no issues using Python 3.11+
    - Install the required packages using `pip install -r requirements.txt`.
 
 2. **Environment Setup**:
