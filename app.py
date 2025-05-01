@@ -197,6 +197,7 @@ if st.session_state.get("show_scrape_jobs_button", False):
                 location="New York, NY",
                 max_results=20,
                 country_indeed="USA",
+                
             )
 
             jobs_scraped_for_job["job_type"] = job
