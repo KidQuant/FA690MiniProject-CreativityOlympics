@@ -26,7 +26,8 @@ from jobspy import scrape_jobs
 load_dotenv()
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
-st.title("Resume Analyzer and Optimizer")
+st.title("The ROAR! App")
+st.subheader("Resume Optimization and Analysis Resource")
 action = st.radio(
     "Select Action:",
     ("Analyze Resume", "Create a New Resume", "Update Existing Resume"),
@@ -190,17 +191,18 @@ if st.session_state.get("show_scrape_jobs_button", False):
                 site_name=[
                     "indeed",
                     "linkedin",
-                    "glassdoor",
+                    # "glassdoor",
                     "google",
                 ],
                 search_term=job,
                 location="New York, NY",
-                max_results=20,
+                max_results=2,
                 country_indeed="USA",
                 
             )
 
             jobs_scraped_for_job["job_type"] = job
+            jobs_scraped_for_job = jobs_scraped_for_job.sort_values(by="date_posted", ascending=False)
 
             # Merge the output with the previous dataframe
             jobs_scraped = pd.concat(
@@ -210,19 +212,20 @@ if st.session_state.get("show_scrape_jobs_button", False):
         jobs_scraped = jobs_scraped[
             [
                 # "id",
-                "site",
-                "job_url",
                 "title",
                 "company",
-                "date_posted",
                 "job_type",
+                "date_posted",
+                "description",
+                "job_url",
+                "site",
                 "interval",
                 "min_amount",
                 "max_amount",
                 "currency",
-                "description",
             ]
         ]
+
         st.write(jobs_scraped)
 
 if action in ["Create a New Resume", "Update Existing Resume"]:
